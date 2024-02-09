@@ -1,0 +1,52 @@
+<html>
+  <head>
+    <title>Paste Inspector</title>
+    <meta charset="UTF-8" />
+    <style>
+      pre {
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="button">PASTE</button>
+    <pre id="content"></pre>
+    <script>
+      // @ts-check
+
+      /** @type {HTMLButtonElement | null} */
+      const button = document.querySelector("#button");
+      /** @type {HTMLPreElement | null} */
+      const content = document.querySelector("#content");
+      if (!button || !content) throw new Error("DOM not found");
+
+      content.innerHTML = `paste to see clipboard content`;
+
+      button.onclick = async () => {
+        /** @type {string[]} */
+        let logs = ["see console for more details..."];
+        try {
+          const items = await navigator.clipboard.read();
+          for (const item of items) {
+            console.log(item);
+            logs.push(`Item types: ${item.types.join(", ")}`);
+            for (const type of item.types) {
+              if (type.slice(0, 5) === "text/") {
+                const blob = await item.getType(type);
+                const unsafeText = await blob.text();
+                const div = document.createElement("div");
+                div.innerText = unsafeText;
+                logs.push(`<strong>${type}</strong>`);
+                logs.push(div.innerHTML);
+              }
+            }
+          }
+        } catch (error) {
+          console.error(error);
+          logs.push(`Error: ${error}`);
+        }
+        content.innerHTML = `<pre>${logs.join("\n\n")}</pre>`;
+      };
+    </script>
+  </body>
+</html>
